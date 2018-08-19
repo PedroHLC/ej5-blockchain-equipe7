@@ -1,3 +1,21 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
 body {
 	padding-top: 54px;
-	}
+	font-family: 'Roboto', sans-serif;
+}
+
+.navbar.navbar-expand-lg.navbar-dark.bg-dark.fixed-top {
+	background-color: #ba2f7e !important;
+}
+
+.btn.btn-primary.btn-lg {
+	background-color: #3f6eb2;
+}
+
+.navbar-brand {
+	background-image: url("https://i.imgur.com/T3n4UzO.png");
+	background-size: 15%;
+	background-repeat: no-repeat;
+	padding-left: 45px
+}

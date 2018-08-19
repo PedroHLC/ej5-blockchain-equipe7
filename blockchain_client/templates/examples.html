@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Blockchain Client</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/custom.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">Blockchain Client</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="/">Wallet Generator
+                        <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/make/transaction">Make Transaction</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/view/transactions">View Transactions</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div class="card-body">
+                <h4 class="card-title"></h4>
+                <p class="card-text">Click on the button below to generate your blockchain wallet</p>
+                <input type="button" class="btn btn-primary btn-lg" id='gerar_identidade' value="Gerar Identidade">
+                <input type="button" class="btn btn-primary btn-lg" id='gerar_identidade' value="">
+                <input type="button" class="btn btn-primary btn-lg" value="Opt2">
+                <input type="button" class="btn btn-primary btn-lg" value="Opt2">
+                <input type="button" class="btn btn-primary btn-lg" value="Opt3">
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
+
+<div class="container">
+
+    <div class="row">
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">Resultado: </h4>
+            <p id="primario">Aww yeah, you successfully read this important alert message. This example text is going to run a bit longer so that you can see how spacing within an alert works with this kind of content.</p>
+            <hr>
+            <p class="mb-0" id="secundario">Whenever you need to, be sure to use margin utilities to keep things nice and tidy.</p>
+        </div>
+    </div>
+    <br>
+    <br>
+
+</div>
+
+
+
+
+
+<!-- Bootstrap core JavaScript -->
+<script src="/static/vendor/jquery/jquery.min.js"></script>
+<script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+
+    $(function(){
+
+        $('input').click(function(){
+            var person = prompt("Insira o CPF da pessoa a ser cadastrada, para gerar sua identidade digital:", "");
+            $.ajax({
+                url: '192.168.1.157:7000/new/'+person,
+                type: 'GET',
+                success: function(response){
+                    document.getElementById("primario").innerHTML = response['private_key'];
+                    document.getElementById("secundario").innerHTML = response['public_key'];
+                    //document.getElementById("uuid").innerHTML = response['uuid'];
+                    document.getElementById("warning").style.display = "block";
+                },
+                error: function(error){
+                    console.log(error);
+                }
+            });
+        });
+    })
+
+
+</script>
+
+
+
+</body>
+
+</html>

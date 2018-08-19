@@ -219,11 +219,6 @@ def configure():
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.form
-    print("Sender address:"+request.form['uuid'])
-    print("Type:" + request.form['type'])
-    print("Label:" + request.form['label'])
-    print("value:" + request.form['value'])
-    print("Signature:" + request.form['signature'])
     # Check that the required fields are in the POST'ed value
     required = ['uuid', 'type', 'label', 'value', 'signature']
     if not all(k in values for k in required):
@@ -399,7 +394,8 @@ def list_permission():
     for block in blockchain.chain[::-1]:
         for transaction in block['transactions']:
             if transaction['uuid'] == uuid and transaction['type'] == typo:
-                list_permission.append(transaction['label'])
+                if not transaction['label'] in list_permission:
+                    list_permission.append(transaction['label'])
 
     return jsonify({"permissions": list_permission}), 200
 
@@ -442,13 +438,13 @@ def search():
         filter = aux[::]
 
 
-    if request.args.get('values'):
+    if request.args.get('value'):
         aux = []
         for block in filter:
             block_cpp = {attr: value for attr, value in block.items()}
             block_cpp['transactions'] = []
             for transaction in block['transactions']:
-                if transaction['uuid'] == request.args.get('uuid'):
+                if transaction['value'] == request.args.get('value'):
                     block_cpp['transactions'].append(transaction)
             aux.append(block_cpp)
         # Filtered by type
