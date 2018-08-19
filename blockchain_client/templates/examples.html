@@ -56,7 +56,9 @@
                 <input type="button" class="btn btn-primary btn-lg" id='atualizar' value="Atualizar Email">
                 <input type="button" class="btn btn-primary btn-lg" id='permissao' value="Add permissão">
                 <input type="button" class="btn btn-primary btn-lg" id='obter_token' value="Obter Token">
-
+                <input type="button" class="btn btn-primary btn-lg" id='see_wanted' value="Ver permissões da loja X">
+                <br>
+                <input type="button" class="btn btn-primary btn-lg" id='recv' value="Dar permissão">
                 <h4 class="card-title"></h4>
                 <p class="card-text">Clique no botão abaixo para realizar as requisições do <b>CONSUMIDOR:</b></p>
 
@@ -97,6 +99,8 @@
     var last_prv = '';
     var last_uuid = '';
     var client = 'http://192.168.1.157:6001';
+    var loja_x = 'http://192.168.1.157:8080';
+    var secret = '';
     $(function(){
 
         $('#gerar_identidade').click(function(){
@@ -147,9 +151,10 @@
                 type: 'GET',
                 success: function(response){
                     document.getElementById("primario").innerHTML= response['message'];
+                    document.getElementById("secundario").innerHTML= response;
                 },
                 error: function(error){
-                     document.getElementById("primario").innerHTML= error;
+                    document.getElementById("primario").innerHTML= error;
                 }
             });
         });
@@ -163,8 +168,8 @@
                 url: client+'/perm/1/'+person+'/'+last_uuid+'/'+last_prv,
                 type: 'GET',
                 success: function(response){
-                   document.getElementById("primario").innerHTML= response['message'];
-                   document.getElementById("primario").innerHTML= response['message'];
+                    document.getElementById("primario").innerHTML= response['message'];
+                    document.getElementById("secundario").innerHTML= response['message'];
                 },
                 error: function(error){
                     console.log(error);
@@ -173,15 +178,49 @@
         });
     });
 
-     $(function(){
+    $(function(){
 
-        $('#secret').click(function(){
-            var person = prompt("Dominio para dar permissão aos seus dados:", "");
+        $('#obter_token').click(function(){
+            var person = prompt("Qual identidade sera compatilhada(cpf, email, etc):", "");
             $.ajax({
-                url: client+'/secret/'+person+'/'+last_uuid+'/'+last_prv,
+                url: client+'/secret/'+person+'/'+last_prv,
                 type: 'GET',
                 success: function(response){
-                   document.getElementById("primario").innerHTML= response['message'];
+                    document.getElementById("primario").innerHTML= response;
+                    document.getElementById("secundario").innerHTML= response;
+                    secret = response
+                },
+                error: function(error){
+                    console.log(error);
+                }
+            });
+        });
+    });
+
+    $(function(){
+
+        $('#see_wanted').click(function(){
+            $.ajax({
+                url: loja_x+'/wanted/',
+                type: 'GET',
+                success: function(response){
+                    document.getElementById("primario").innerHTML= response;
+                },
+                error: function(error){
+                    console.log(error);
+                }
+            });
+        });
+    });
+
+    $(function(){
+
+        $('#recv').click(function(){
+            $.ajax({
+                url: loja_x+'/recv/'+last_uuid+'/'+encodeURI(secret),
+                type: 'GET',
+                success: function(response){
+                    document.getElementById("primario").innerHTML= response;
                 },
                 error: function(error){
                     console.log(error);
