@@ -3,6 +3,8 @@ import base64
 import json
 from flask import Flask, jsonify
 from Crypto.Cipher import ARC4
+from Crypto.PublicKey
+from Crypto.Hash import SHA 
 
 app = Flask(__name__)
 chain = 'http://miner.localhost:5051'
@@ -32,7 +34,9 @@ def add_user(uuid, secret_key):
     f = open(me_db, 'a+')
     f.write(uuid+':'+data.decode()+'\n')
     f.close()
-    return ""
+
+    response = requests.get(chain+'/chain/search', params={'type':'sign', 'label':uuid, 'value':SHA.new(data).hexdigest()})
+    return response
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
