@@ -1,13 +1,15 @@
-from flask import Flask, jsonify
 import requests
-from Crypto.Cipher import AES
+import base64
+import json
+from flask import Flask, jsonify
+from Crypto.Cipher import ARC4
 
 app = Flask(__name__)
-chain = 'http://miner.localhost:5000'
+chain = 'http://miner.localhost:5051'
 me_domain = 'centauro.com.br'
 me_db = 'centauro.db'
 
-@app.route('/')
+@app.route('/debug')
 def showmewhatyougot():
     f = open(me_db, 'r+')
     content = f.read()
@@ -18,16 +20,17 @@ def showmewhatyougot():
 def whatyouneed():
     return jsonify(["cpf"]);
 
-@app.route('/auth/<string:uuid>/<string:key>', methods=['GET'])
-def add_user(uuid, key):
+@app.route('/auth')
+def add_user(uuid, secret_key):
     perm = requests.get(chain+'/chain/permission', params={'uuid':uuid, 'label': me_domain})
-    if(perm.status_code != 200 or perm.text != "allow"):
+    if(perm.status_code != 200 or (not "allow" in perm.text)):
         return "No permission to read!"
-    enc_data = requests.get(chain+'/chain/search', params={'uuid':uuid, 'type':'input', 'label':'cpf'}).text;
-    aes = AES.new(key, AES.MODE_CFB, IV)
-    data = aes.decrypt(enc_data)
+    response = requests.get(chain+'/chain/search', params={'uuid':uuid, 'type':'input', 'label':'cpf'})
+    encoded = json.loads(response.text)[0]["value"]
+    cipher = ARC4.new(base64.b64decode(secret_key))
+    data = cipher.decrypt(base64.b64decode(encoded))
     f = open(me_db, 'a+')
-    f.write(uuid+':'+data+'\n')
+    f.write(uuid+':'+data.decode()+'\n')
     f.close()
     return ""
 
