@@ -15,7 +15,8 @@ from flask_cors import CORS
 
 MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
-MINING_DIFFICULTY = 2
+MINING_DIFFICULTY = 1
+MOTHER_ADDRESS = ''
 
 
 class Blockchain:
@@ -52,6 +53,8 @@ class Blockchain:
         signed by the public key (uuid)
         """
         # TODO: Ver se a assinatura existe no banco MOTHER
+        # /get
+
         public_key = RSA.importKey(binascii.unhexlify(uuid))
         verifier = PKCS1_v1_5.new(public_key)
         h = SHA.new(str(transaction).encode('utf8'))
@@ -344,69 +347,73 @@ def search_blocks_by_timestamp(chain,timestamp_low,timestamp_upp):
     return blocks_list
 
 
-@app.route('/chain/permission',methods=['POST'])
+@app.route('/chain/permission',methods=['GET'])
 def search_permission():
-    values = request.form
-    uuid = values['uuid']
-    label = values['label']
-    for block in blockchain.chain[::-1]:
-        for transaction in block.transactions:
-            if transaction['uuid'] == uuid and values['label'] == label:
-                return transaction['type'], 200
+    uuid = request.args.get('uuid')
+    label = request.args.get('label')
 
-    return jsonify({'message':'hvnjk'}), 404
+    for block in blockchain.chain[::-1]:
+        print(block)
+        for transaction in block['transactions']:
+            if transaction['uuid'] == uuid and transaction['label'] == label:
+                return jsonify({"type":transaction['type']}), 200
+
+    return jsonify({'message':'Not found'}), 404
 
 # Busca por: Label, Type(3 types diferentes), Sender, timestamp
 @app.route('/chain/search',methods=['GET'])
 def search():
-    values = request.form
     filter = blockchain.chain
 
-    if values['timestamp_upp'] and values['timestamp_low']:
-        timestamp_low = values['timestamp_low']
-        timestamp_upp = values['timestamp_upp']
+    if request.args.get('timestamp_upp') and request.args.get('timestamp_low'):
+        timestamp_low = request.args.get('timestamp_low')
+        timestamp_upp = request.args.get('timestamp_upp')
         filter = search_blocks_by_timestamp(filter,timestamp_low,timestamp_upp)
 
     # Type: Allow, Disallow, Input, Sign
-    if values['type']:
+    if request.args.get('type'):
         aux =[]
         for block in filter:
-            block_cpp = {attr:value for attr, value in block.items}
+            block_cpp = {attr:value for attr, value in block.items()}
             block_cpp['transactions'] = []
-            for transaction in block.transactions:
-                if transaction['type'] == values['type']:
+            for transaction in block['transactions']:
+                if transaction['type'] == request.args.get('type'):
                     block_cpp['transactions'].append(transaction)
             aux.append(block_cpp)
         # Filtered by type
         filter = aux[::]
 
 
-    if values['label']:
+    if request.args.get('label'):
         aux = []
         for block in filter:
-            block_cpp = {attr: value for attr, value in block.items}
+            block_cpp = {attr: value for attr, value in block.items()}
             block_cpp['transactions'] = []
-            for transaction in block.transactions:
-                if transaction['label'] == values['label']:
+            for transaction in block['transactions']:
+                if transaction['label'] == request.args.get('label'):
                     block_cpp['transactions'].append(transaction)
             aux.append(block_cpp)
         # Filtered by type
         filter = aux[::]
 
 
-    if values['uuid']:
+    if request.args.get('values'):
         aux = []
         for block in filter:
-            block_cpp = {attr: value for attr, value in block.items}
+            block_cpp = {attr: value for attr, value in block.items()}
             block_cpp['transactions'] = []
-            for transaction in block.transactions:
-                if transaction['uuid'] == values['uuid']:
+            for transaction in block['transactions']:
+                if transaction['uuid'] == request.args.get('uuid'):
                     block_cpp['transactions'].append(transaction)
             aux.append(block_cpp)
         # Filtered by type
         filter = aux[::]
 
-    return jsonify(filter)
+    response = []
+    for block in filter:
+        for transaction in block['transactions']:
+            response.append(transaction)
+    return jsonify(response)
 
 
 """def generate_random_transactions(size):
