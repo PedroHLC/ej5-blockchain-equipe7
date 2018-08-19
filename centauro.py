@@ -3,12 +3,13 @@ import requests
 from Crypto.Cipher import AES
 
 app = Flask(__name__)
-chain = 'http://chain.meupc.me:8080'
+chain = 'http://localhost:5000'
 me_domain = 'centauro.com.br'
+me_db = 'centauro.db'
 
 @app.route('/')
 def showmewhatyougot():
-    f = open('lojinha.db', 'r+')
+    f = open(me_db, 'r+')
     content = f.read()
     f.close()
     return content
@@ -25,16 +26,17 @@ def add_user(uuid, key):
     enc_data = requests.get(chain+'/chain/search', params={'uuid':uuid, 'type':'input', 'label':'cpf'}).text;
     aes = AES.new(key, AES.MODE_CFB, IV)
     data = aes.decrypt(enc_data)
-    f = open('lojinha.db', 'a+')
+    f = open(me_db, 'a+')
     f.write(uuid+':'+data+'\n')
     f.close()
+    return ""
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
-    parser.add_argument('-h', '--host', default='chain.lojinha.com.br', type=str, help='host to listen on')
+    parser.add_argument('-p', '--port', default=8080, type=int, help='port to listen on')
+    parser.add_argument('-h', '--host', default='chain.'+me_domain, type=str, help='host to listen on')
     args = parser.parse_args()
 
     app.run(host=args.host, port=args.port)
