@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import requests
 import binascii
 import Crypto
@@ -11,6 +12,7 @@ import base64
 from Transactions import *
 
 app = Flask(__name__)
+CORS(app)
 
 BLOCKCHAIN_IP = 'http://miner.localhost:5000'
 mother_prv = open('mother.prv', 'r').read().strip()

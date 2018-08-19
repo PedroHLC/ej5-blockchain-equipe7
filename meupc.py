@@ -19,7 +19,7 @@ def secret_create(label, priv_key):
     return str(base64.b64encode(secret_key).decode()), 200
 
 @app.route('/perm/create/<int:perm>/<string:domain>/<string:uuid>/<string:priv_key>', methods=['GET'])
-def permission_crate(perm, domain, uuid, priv_key):
+def permission_create(perm, domain, uuid, priv_key):
     return 404
 
 if __name__ == '__main__':
