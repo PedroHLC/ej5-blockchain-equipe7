@@ -1,41 +1,17 @@
-"""
-title           : blockchain.py
-description     : A blockchain implemenation
-author          : Adil Moujahid
-date_created    : 20180212
-date_modified   : 20180309
-version         : 0.5
-usage           : python blockchain.py
-                  python blockchain.py -p 5000
-                  python blockchain.py --port 5000
-python_version  : 3.6.1
-Comments        : The blockchain implementation is mostly based on [1]. 
-                  I made a few modifications to the original code in order to add RSA encryption to the transactions 
-                  based on [2], changed the proof of work algorithm, and added some Flask routes to interact with the 
-                  blockchain from the dashboards
-References      : [1] https://github.com/dvf/blockchain/blob/master/blockchain.py
-                  [2] https://github.com/julienr/ipynb_playground/blob/master/bitcoin/dumbcoin/dumbcoin.ipynb
-"""
-
-from collections import OrderedDict
-
 import binascii
-
-from Crypto.Hash import SHA
-from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_v1_5
-
 import hashlib
 import json
+from collections import OrderedDict
 from time import time
 from urllib.parse import urlparse
 from uuid import uuid4
 
 import requests
+from Crypto.Hash import SHA
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
-
-
 
 MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
@@ -70,13 +46,13 @@ class Blockchain:
             raise ValueError('Invalid URL')
 
 
-    def verify_transaction_signature(self, sender_address, signature, transaction):
+    def verify_transaction_signature(self, uuid, signature, transaction):
         """
         Check that the provided signature corresponds to transaction
-        signed by the public key (sender_address)
+        signed by the public key (uuid)
         """
         # TODO: Ver se a assinatura existe no banco MOTHER
-        public_key = RSA.importKey(binascii.unhexlify(sender_address))
+        public_key = RSA.importKey(binascii.unhexlify(uuid))
         verifier = PKCS1_v1_5.new(public_key)
         h = SHA.new(str(transaction).encode('utf8'))
         print(transaction)
@@ -84,28 +60,28 @@ class Blockchain:
         return verifier.verify(h, binascii.unhexlify(signature))
 
 
-    def submit_transaction(self, sender_address, type, label, value, signature):
+    def submit_transaction(self, uuid, type, label, value, signature):
         """
         Add a transaction to transactions array if the signature verified
         """
 
         # value é um JSON com informações que o sender quem compartilhar
-        # Type: Allow, Disallow, Input, Sign
-        transaction = OrderedDict({'sender_address': sender_address, 
+        # Type: allow, disallow, input, sign, notify
+        transaction = OrderedDict({'uuid': uuid,
                                     'type': type,
                                     'label':label,
                                     'value': value
                                     })
 
         #Reward for mining a block
-        #if sender_address == MINING_SENDER:
+        #if uuid == MINING_SENDER:
         #    self.transactions.append(transaction)
         #    return len(self.chain) + 1
         #Manages transactions from wallet to another wallet
         #else:
 
         # TODO: Checar se a assinatura existe no banco de dados (Se foi criada pela MOTHER)
-        transaction_verification = self.verify_transaction_signature(sender_address, signature, transaction)
+        transaction_verification = self.verify_transaction_signature(uuid, signature, transaction)
         if transaction_verification:
             self.transactions.append(transaction)
             return len(self.chain) + 1
@@ -173,18 +149,16 @@ class Blockchain:
 
         while current_index < len(chain):
             block = chain[current_index]
-            #print(last_block)
-            #print(block)
-            #print("\n-----------\n")
+
             # Check that the hash of the block is correct
             if block['previous_hash'] != self.hash(last_block):
                 return False
 
             # Check that the Proof of Work is correct
             # Delete the reward transaction
-            transactions = block['transactions'][:-1]
+            transactions = block['transactions'][::]
             # Need to make sure that the dictionary is ordered. Otherwise we'll get a different hash
-            transaction_elements = ['sender_address', 'recipient_address', 'value']
+            transaction_elements = ['uuid', 'type', 'label','value']
             transactions = [OrderedDict((k, transaction[k]) for k in transaction_elements) for transaction in transactions]
 
             if not self.valid_proof(transactions, block['previous_hash'], block['nonce'], MINING_DIFFICULTY):
@@ -202,6 +176,7 @@ class Blockchain:
         """
         neighbours = self.nodes
         new_chain = None
+        print("Nodes:"+str(neighbours))
 
         # We're only looking for chains longer than ours
         max_length = len(self.chain)
@@ -247,18 +222,18 @@ def configure():
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.form
-    print("Sender address:"+request.form['sender_address'])
+    print("Sender address:"+request.form['uuid'])
     print("Type:" + request.form['type'])
     print("Label:" + request.form['label'])
     print("value:" + request.form['value'])
     print("Signature:" + request.form['signature'])
     # Check that the required fields are in the POST'ed value
-    required = ['sender_address', 'type', 'label', 'value', 'signature']
+    required = ['uuid', 'type', 'label', 'value', 'signature']
     if not all(k in values for k in required):
         return 'Missing values', 400
     # Create a new Transaction
-    #  sender_address, type, label, value, signature
-    transaction_result = blockchain.submit_transaction(values['sender_address'],
+    #  uuid, type, label, value, signature
+    transaction_result = blockchain.submit_transaction(values['uuid'],
                                                        values['type'],
                                                        values['label'],
                                                        values['value'],
@@ -291,7 +266,6 @@ def full_chain():
 
 @app.route('/mine', methods=['GET'])
 def mine():
-
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.chain[-1]
     nonce = blockchain.proof_of_work()
@@ -307,6 +281,10 @@ def mine():
         'nonce': block['nonce'],
         'previous_hash': block['previous_hash'],
     }
+    for node in blockchain.nodes:
+        r = requests.get('http://' + node +'/nodes/resolve', {})
+        print("\n"+node+" "+str(r.status_code))
+
     return jsonify(response), 200
 
 
@@ -320,7 +298,9 @@ def register_nodes():
         return "Error: Please supply a valid list of nodes", 400
 
     for node in nodes:
-        blockchain.register_node(node)
+        response = requests.get('http://'+request.form['nodes'], {})
+        if response.status_code == 200:
+            blockchain.register_node(node)
 
     response = {
         'message': 'New nodes have been added',
@@ -338,14 +318,12 @@ def consensus():
             'message': 'Our chain was replaced',
             'new_chain': blockchain.chain
         }
-        return False
     else:
         response = {
             'message': 'Our chain is authoritative',
             'chain': blockchain.chain
         }
-        return True
-    # return jsonify(response), 200
+    return jsonify(response), 200
 
 
 @app.route('/nodes/get', methods=['GET'])
@@ -365,8 +343,20 @@ def search_blocks_by_timestamp(chain,timestamp_low,timestamp_upp):
     # TODO: Can be faster
     return blocks_list
 
+@app.route('/chain/permission',methods=['GET'])
+def search_permission():
+    values = request.form
+    uuid = values['uuid']
+    label = values['label']
+    for block in blockchain.chain[::-1]:
+        for transaction in block.transactions:
+            if transaction['uuid'] == uuid and values['label'] == label:
+                return transaction['type']
+
+    return 404
+
 # Busca por: Label, Type(3 types diferentes), Sender, timestamp
-@app.route('/chain/search',methods=['POST'])
+@app.route('/chain/search',methods=['GET'])
 def search():
     values = request.form
     filter = blockchain.chain
@@ -418,16 +408,31 @@ def search():
     return jsonify(filter)
 
 
+"""def generate_random_transactions(size):
+    type = ['allow', 'disallow', 'input', 'sign', 'notify']
+    label = ['cpf','cnh','passaporte','endereco','email.primary','phone.home','phone.work','lojinha.com.br']
+    for x in range(0,size):
+        random_gen = Crypto.Random.new().read
+        private_key = RSA.generate(1024, random_gen)
+        transaction = OrderedDict({'uuid': private_key.publickey(),
+                                   'type': random.choice(type),
+                                   'label': random.choice(label),
+                                   'value': token_urlsafe(256)
+                                   })
+        blockchain.transactions.append(transaction)
+"""
+
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
+    parser.add_argument('-a', '--address', default="127.0.0.1", type=str, help='ip address')
     args = parser.parse_args()
     port = args.port    
-
-    app.run(host='127.0.0.1', port=port)
+    addr = args.address
+    app.run(host=addr, port=port)
 
 
 

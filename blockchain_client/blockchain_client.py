@@ -31,16 +31,16 @@ from flask import Flask, jsonify, request, render_template
 
 
 class Transaction:
-    #  sender_address, type, label, value, signature
-    def __init__(self, sender_address, sender_private_key, type, label, value):
-        self.sender_address = sender_address
+    #  uuid, type, label, value, signature
+    def __init__(self, uuid, sender_private_key, type, label, value):
+        self.uuid = uuid
         self.sender_private_key = sender_private_key
         self.type = type
         self.label = label
         self.value = value
 
     def to_dict(self):
-        return OrderedDict({'sender_address': self.sender_address,
+        return OrderedDict({'uuid': self.uuid,
                             'type': self.type,
                             'label': self.label,
                             'value': val_encrypt(self.value, self.label, sender_private_key)
@@ -89,16 +89,16 @@ def new_wallet():
 
 @app.route('/generate/transaction', methods=['POST'])
 def generate_transaction():
-    sender_address = request.form['sender_address']
+    uuid = request.form['uuid']
     sender_private_key = request.form['sender_private_key']
     type = request.form['type']
     label = request.form['label']
     value = request.form['value']
-    #print("Sender address:"+sender_address)
+    #print("Sender address:"+uuid)
     #print("Type:" + type)
     #print("Label:" +label)
     #print("Data:"+ value)
-    transaction = Transaction(sender_address, sender_private_key, type, label, value)
+    transaction = Transaction(uuid, sender_private_key, type, label, value)
 
     response = {'transaction': transaction.to_dict(), 'signature': transaction.sign_transaction()}
 
