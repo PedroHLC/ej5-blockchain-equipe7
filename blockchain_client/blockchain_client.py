@@ -98,8 +98,10 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=8080, type=int, help='port to listen on')
+    parser.add_argument('-a', '--address', default='127.0.0.1', type=str, help='host to listen on')
+    parser.add_argument('-p', '--port', default=8090, type=int, help='port to listen on')
     args = parser.parse_args()
+    host = args.address
     port = args.port
 
-    app.run(host='192.168.1.184', port=port)
+    app.run(host=host, port=port)

@@ -95,7 +95,7 @@ def migrate_all():
     base = csv.reader(open('basedados.csv'))
     for row in base:
         response = store_data(row[0])
-    return 200
+    return "FINISHED", 200
 
 
 if __name__ == '__main__':
