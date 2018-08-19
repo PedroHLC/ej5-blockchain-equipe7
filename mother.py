@@ -63,7 +63,11 @@ def store_data(cpf):
     private_key, public_key = new_keypair() # Pega as chaves
     save_public_key(public_key, identifier)
     write_values(public_key, cpf, identifier, private_key)
-    return private_key
+    data= OrderedDict({'prv': private_key,
+                        'pub': public_key,
+                        'uid': identifier 
+                      })
+    return jsonify(data), 200
 
 @app.route("/new/<string:cpf>")
 def new_person(cpf):
