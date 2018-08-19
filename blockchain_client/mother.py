@@ -35,9 +35,9 @@ def write_values(public_key, cpf, identifier, private_key):
                 r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':public_key,'type':'input', 'label':'cpf', 'value':encrypted,'signature':signature})
                 # Valida o mesmo
                 sha = SHA.new(value.encode('utf-8')).hexdigest()
-                transaction = Transaction(mother_pub, mother_prv, 'sign', public_key, sha)
+                transaction = Transaction(mother_pub, mother_prv, 'sign', identifier, sha)
                 signature = transaction.sign_transaction()
-                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':mother_pub,'type':'sign', 'label':public_key, 'value':sha,'signature':signature})
+                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':mother_pub,'type':'sign', 'label':identifier, 'value':sha,'signature':signature})
 
 
 def save_public_key(public_key, identifier):
