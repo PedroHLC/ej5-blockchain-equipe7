@@ -28,7 +28,7 @@ def permission_create(perm, domain, uuid, priv_key):
     transaction = Transaction(uuid, priv_key, perm, domain, '')
     signature = transaction.sign_transaction()
     r = requests.get(url=chain+'/transactions/new', params={'uuid':uuid,'type':perm, 'label':domain, 'value':'','signature':signature})
-    return "", r.status_code
+    return r.text, r.status_code
 
 @app.route('/email/<string:email>/<string:uuid>/<string:priv_key>', methods=['GET'])
 def set_email(email, uuid, priv_key):
@@ -45,7 +45,7 @@ def set_email(email, uuid, priv_key):
     transaction = Transaction(uuid, priv_key, type_, label, encrypted)
     signature = transaction.sign_transaction()
     r = requests.get(url=chain+'/transactions/new', params={'uuid':uuid,'type':type_, 'label':label, 'value':encrypted,'signature':signature})
-    return "", r.status_code
+    return  r.text, r.status_code
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
