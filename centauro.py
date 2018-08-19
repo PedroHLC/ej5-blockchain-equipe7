@@ -3,7 +3,7 @@ import requests
 from Crypto.Cipher import AES
 
 app = Flask(__name__)
-chain = 'http://localhost:5000'
+chain = 'http://miner.localhost:5000'
 me_domain = 'centauro.com.br'
 me_db = 'centauro.db'
 

@@ -24,6 +24,7 @@ import Crypto.Random
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
+from Crypto.Cipher import AES
 
 import requests
 from flask import Flask, jsonify, request, render_template
@@ -42,7 +43,7 @@ class Transaction:
         return OrderedDict({'sender_address': self.sender_address,
                             'type': self.type,
                             'label': self.label,
-                            'value': self.value
+                            'value': val_encrypt(self.value, self.label, sender_private_key)
                             })
 
     def sign_transaction(self):
@@ -104,6 +105,11 @@ def generate_transaction():
     # print("\n"+str(response)+"\n")
     return jsonify(response), 200
 
+def val_encrypt(value, label, private_key):
+    private_key = RSA.importKey(binascii.unhexlify(self.sender_private_key))
+    signer = PKCS1_v1_5.new(private_key)
+    aes = AES.new(signer.sign(label), AES.MODE_CFB, IV)
+    return aes.encrypt(value)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
