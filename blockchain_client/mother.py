@@ -1,4 +1,5 @@
-from flask import Flask, request
+from flask import Flask
+import requests
 import binascii
 import Crypto
 import Crypto.Random
@@ -6,61 +7,60 @@ from Crypto.PublicKey import RSA
 import csv
 import uuid
 import os
+import base64
+from Transactions import *
 
 app = Flask(__name__)
 
-BLOCKCHAIN_IP = 'http://192.168.1.184:5000/'
+BLOCKCHAIN_IP = 'http://192.168.1.184:5000'
 
-@app.route('/wallet/new', methods=['POST'])
-def new_key(cpf):
-    required = ['cpf']
-    if not all(k in values for k in required) or cpf:
-        return 'Missing values', 400
-    cpf = request['cpf']
-    random_gen = Crypto.Random.new().read
+random_gen = Crypto.Random.new().read
+
+def new_person():
     private_key = RSA.generate(1024, random_gen)
-    public_key = cpf
-    response = {
-        'private_key': binascii.hexlify(private_key.exportKey(format='DER')).decode('ascii'),
-        'public_key': binascii.hexlify(public_key.exportKey(format='DER')).decode('ascii')
-    }
+    public_key = private_key.publickey()
+    return binascii.hexlify(private_key.exportKey(format='DER')).decode('ascii'), binascii.hexlify(public_key.exportKey(format='DER')).decode('ascii')
 
-    return jsonify(response), 200
-
-def write_values(public_key, cpf, identifier):
+def write_values(public_key, cpf, identifier, private_key):
     with open('basedados.csv', 'r') as f:               # Abre a base e procura o cpf
         reader = csv.reader(f)
         for row in reader:
             if cpf == row[0]:                           # Se achar, faz as trasacoes na blockchain
-                for dado in row:
-                    request.post(BLOCKCHAIN_IP + 
-                    'transactions/new?sender_adress=' + public_key + 
-                    '&type=input&label=''&value=' + dado + 
-                    '&signature=' + identifier)  # Faz a req pro server fazer a transacao
+                # Faz a req pro server fazer a transacao
+                transaction = Transaction(public_key, private_key, 'input', 'cpf', cpf)
+                signature = transaction.sign_transaction()
+                encrypted = val_encrypt(cpf, 'cpf', private_key)
+                print(public_key)
+                print(private_key)
+                print(encrypted)
+                print(signature)
+                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':public_key,'type':'input', 'label':'cpf', 'value':encrypted,'signature':signature})
+                print(r)
+                print(r.text)
                 break
 
 def save_public_key(public_key, identifier):
-    filename = "/publics/" + public_key + ".key"
+    filename = "publics/" + str(identifier) + ".key"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "w") as f:
-        f.write(identifier)
+        f.write(public_key)
 
-#@app.route("/migrate")
-#def init_values():
-#    pass
-
-@app.route("/migrate")
-def store_data():
-    required = ['cpf']
-    if not all(k in values for k in required):
-        return 'Missing values', 400
-    cpf = request['cpf']
+@app.route("/migrate/<string:cpf>")
+def store_data(cpf):
     identifier = uuid.uuid4()
-    private_key, public_key = new_key(cpf) # Pega as chaves
-    write_values(public_key, cpf, identifier)
+    private_key, public_key = new_person() # Pega as chaves
     save_public_key(public_key, identifier)
+    write_values(public_key, cpf, identifier, private_key)
     return private_key
 
+@app.route("/get/<string:uuid>")
+def get_public_key(uuid):
+    filename = 'publics/' + str(uuid) + '.key'
+    try:
+        with open(filename, "r") as f:
+            return f.read()
+    except expression as identifier:
+        return 404
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
