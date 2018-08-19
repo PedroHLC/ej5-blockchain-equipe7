@@ -58,8 +58,9 @@ def store_data(cpf):
 def get_public_key(uuid):
     filename = 'publics/' + str(uuid) + '.key'
     try:
-        return f.read(), 200
-    except expression as identifier:
+        with open(filename, "r") as f:
+            return f.read(), 200
+    except Exception as identifier:
         return 404
 
 @app.route("/migrate_all")

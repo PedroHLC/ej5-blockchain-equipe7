@@ -17,7 +17,7 @@ MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
 MINING_DIFFICULTY = 2
 MOTHER_ADDRESS = ''
-UUID_address = '192.168.1.144:5000'
+UUID_address = 'http://192.168.1.184:7000'
 
 
 class Blockchain:
@@ -56,9 +56,9 @@ class Blockchain:
         # TODO: Ver se a assinatura existe no banco MOTHER
         # /get MULA
         response = requests.get(UUID_address + '/get/' +uuid , {})
-        if response:
-            public_key = response.json()['public_key']
-        public_key = RSA.importKey(binascii.unhexlify(public_key))
+        if not response:
+            return 404
+        public_key = RSA.importKey(binascii.unhexlify(response.text))
         verifier = PKCS1_v1_5.new(public_key)
         h = SHA.new(str(transaction).encode('utf8'))
         return verifier.verify(h, binascii.unhexlify(signature))
@@ -76,13 +76,6 @@ class Blockchain:
                                     'label':label,
                                     'value': value
                                     })
-
-        #Reward for mining a block
-        #if uuid == MINING_SENDER:
-        #    self.transactions.append(transaction)
-        #    return len(self.chain) + 1
-        #Manages transactions from wallet to another wallet
-        #else:
 
         # TODO: Checar se a assinatura existe no banco de dados (Se foi criada pela MOTHER)
         transaction_verification = self.verify_transaction_signature(uuid, signature, transaction)
@@ -247,7 +240,7 @@ def new_transaction():
         return jsonify(response), 406
     else:
         response = {'message': 'Transaction will be added to Block '+ str(transaction_result)}
-        return jsonify(response), 201
+        return jsonify(response), 200
 
 
 
@@ -271,7 +264,7 @@ def new_transaction_get():
         return jsonify(response), 406
     else:
         response = {'message': 'Transaction will be added to Block '+ str(transaction_result)}
-        return jsonify(response), 201
+        return jsonify(response), 200
 
 
 @app.route('/transactions/get', methods=['GET'])
@@ -333,7 +326,7 @@ def register_nodes():
         'message': 'New nodes have been added',
         'total_nodes': [node for node in blockchain.nodes],
     }
-    return jsonify(response), 201
+    return jsonify(response), 200
 
 
 @app.route('/nodes/resolve', methods=['GET'])
