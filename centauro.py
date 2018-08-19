@@ -1,7 +1,7 @@
 import requests
 import base64
 import json
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from Crypto.Cipher import ARC4
 from Crypto.PublicKey import RSA
@@ -25,8 +25,10 @@ def showmewhatyougot():
 def whatyouneed():
     return jsonify(["cpf"]);
 
-@app.route('/recv/<string:uuid>/<string:secret_key>')
-def add_user(uuid, secret_key):
+@app.route('/recv',methods=['POST'])
+def add_user():
+    secret_key=request.form['secret']
+    uuid=request.form['uuid']
     perm = requests.get(chain+'/chain/permission', params={'uuid':uuid, 'label': me_domain})
     if(perm.status_code != 200 or (not "allow" in perm.text)):
         return "No permission to read!"
@@ -34,6 +36,9 @@ def add_user(uuid, secret_key):
     encoded = json.loads(response.text)[0]["value"]
     cipher = ARC4.new(base64.b64decode(secret_key))
     data = cipher.decrypt(base64.b64decode(encoded))
+    print(secret_key)
+    print(encoded)
+    print(data.decode())
     
     f = open(me_db, 'a+')
     f.write(uuid+':'+data.decode()+'\n')

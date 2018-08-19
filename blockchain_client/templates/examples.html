@@ -217,8 +217,9 @@
 
         $('#recv').click(function(){
             $.ajax({
-                url: loja_x+'/recv/'+last_uuid+'/'+encodeURI(secret),
-                type: 'GET',
+                url: loja_x+'/recv',
+                type: 'POST',
+				data: {uuid: last_uuid, secret: secret},
                 success: function(response){
                     document.getElementById("primario").innerHTML= response;
                 },
