@@ -4,7 +4,14 @@ from Crypto.Cipher import AES
 
 app = Flask(__name__)
 chain = 'http://chain.meupc.me:8080'
-me_domain = 'lojinha.com.br'
+me_domain = 'centauro.com.br'
+
+@app.route('/')
+def showmewhatyougot():
+    f = open('lojinha.db', 'r+')
+    content = f.read()
+    f.close()
+    return content
 
 @app.route('/wanted')
 def whatyouneed():
