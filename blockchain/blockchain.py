@@ -15,8 +15,9 @@ from flask_cors import CORS
 
 MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
-MINING_DIFFICULTY = 1
+MINING_DIFFICULTY = 2
 MOTHER_ADDRESS = ''
+UUID_address = '192.168.1.144:5000'
 
 
 class Blockchain:
@@ -53,13 +54,13 @@ class Blockchain:
         signed by the public key (uuid)
         """
         # TODO: Ver se a assinatura existe no banco MOTHER
-        # /get
-
-        public_key = RSA.importKey(binascii.unhexlify(uuid))
+        # /get MULA
+        response = requests.get(UUID_address + '/get/' +uuid , {})
+        if response:
+            public_key = response.json()['public_key']
+        public_key = RSA.importKey(binascii.unhexlify(public_key))
         verifier = PKCS1_v1_5.new(public_key)
         h = SHA.new(str(transaction).encode('utf8'))
-        print(transaction)
-        print(h.hexdigest())
         return verifier.verify(h, binascii.unhexlify(signature))
 
 
@@ -221,7 +222,6 @@ def configure():
     return render_template('./configure.html')
 
 
-
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.form
@@ -241,6 +241,30 @@ def new_transaction():
                                                        values['label'],
                                                        values['value'],
                                                        request.form['signature'])
+
+    if transaction_result == False:
+        response = {'message': 'Invalid Transaction!'}
+        return jsonify(response), 406
+    else:
+        response = {'message': 'Transaction will be added to Block '+ str(transaction_result)}
+        return jsonify(response), 201
+
+
+
+@app.route('/transactions/new', methods=['GET'])
+def new_transaction_get():
+    uuid = request.args.get('uuid')
+    tipe = request.args.get('type')
+    label = request.args.get('label')
+    value = request.args.get('value')
+    signature = request.args.get('signature')
+
+
+    transaction_result = blockchain.submit_transaction(uuid,
+                                                       tipe,
+                                                       label,
+                                                       value,
+                                                       signature)
 
     if transaction_result == False:
         response = {'message': 'Invalid Transaction!'}
@@ -353,12 +377,39 @@ def search_permission():
     label = request.args.get('label')
 
     for block in blockchain.chain[::-1]:
-        print(block)
         for transaction in block['transactions']:
             if transaction['uuid'] == uuid and transaction['label'] == label:
                 return jsonify({"type":transaction['type']}), 200
 
     return jsonify({'message':'Not found'}), 404
+
+
+@app.route('/chain/transaction-all',methods=['GET'])
+def list_all_transactions():
+    uuid = request.args.get('uuid')
+
+    list_permission = []
+    for block in blockchain.chain[::-1]:
+        for transaction in block['transactions']:
+            if transaction['uuid'] == uuid:
+                list_permission.append(transaction)
+
+    return jsonify({"transaction": list_permission}), 200
+
+
+@app.route('/chain/permission-all',methods=['GET'])
+def list_permission():
+    uuid = request.args.get('uuid')
+    typo = request.args.get('type')
+    list_permission = []
+    for block in blockchain.chain[::-1]:
+        for transaction in block['transactions']:
+            if transaction['uuid'] == uuid and transaction['type'] == typo:
+                list_permission.append(transaction['label'])
+
+    return jsonify({"permissions": list_permission}), 200
+
+
 
 # Busca por: Label, Type(3 types diferentes), Sender, timestamp
 @app.route('/chain/search',methods=['GET'])

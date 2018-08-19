@@ -1,19 +1,3 @@
-'''
-title           : blockchain_client.py
-description     : A blockchain client implemenation, with the following features
-				  - Wallets generation using Public/Private key encryption (based on RSA algorithm)
-				  - Generation of transactions with RSA encryption
-author          : Adil Moujahid
-date_created    : 20180212
-date_modified   : 20180309
-version         : 0.3
-usage           : python blockchain_client.py
-				  python blockchain_client.py -p 8080
-				  python blockchain_client.py --port 8080
-python_version  : 3.6.1
-Comments        : Wallet generation and transaction signature is based on [1]
-References      : [1] https://github.com/julienr/ipynb_playground/blob/master/bitcoin/dumbcoin/dumbcoin.ipynb
-'''
 import base64
 from collections import OrderedDict
 
@@ -94,10 +78,6 @@ def generate_transaction():
     type = request.form['type']
     label = request.form['label']
     value = request.form['value']
-    #print("Sender address:"+uuid)
-    #print("Type:" + type)
-    #print("Label:" +label)
-    #print("Data:"+ value)
     transaction = Transaction(uuid, sender_private_key, type, label, value)
 
     response = {'transaction': transaction.to_dict(), 'signature': transaction.sign_transaction()}
@@ -122,4 +102,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     port = args.port
 
-    app.run(host='127.0.0.1', port=port)
+    app.run(host='192.168.1.184', port=port)
