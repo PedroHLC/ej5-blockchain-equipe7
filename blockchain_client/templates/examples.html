@@ -57,6 +57,9 @@
                 <input type="button" class="btn btn-primary btn-lg" id='permissao' value="Add permissão">
                 <input type="button" class="btn btn-primary btn-lg" id='obter_token' value="Obter Token">
 
+                <h4 class="card-title"></h4>
+                <p class="card-text">Clique no botão abaixo para realizar as requisições do <b>CONSUMIDOR:</b></p>
+
 
             </div>
         </div>
@@ -93,7 +96,7 @@
     var chain = 'http://192.168.1.157:7000';
     var last_prv = '';
     var last_uuid = '';
-
+    var client = 'http://192.168.1.157:6001';
     $(function(){
 
         $('#gerar_identidade').click(function(){
@@ -105,8 +108,7 @@
                     document.getElementById("primario").innerHTML = "Chave privada:"+response['prv'];
                     last_prv = response['prv'];
                     document.getElementById("secundario").innerHTML = "Chave pública:"+response['pub'];
-                    last_uuid = response['uuid'];
-                    document.getElementById("warning").style.display = "block";
+                    last_uuid = response['uid'];
                 },
                 error: function(error){
                     console.log(error);
@@ -126,31 +128,11 @@
                 success: function(response){
                     document.getElementById("primario").innerHTML = "Chave privada:"+response['prv'];
                     document.getElementById("secundario").innerHTML = "Chave pública:"+response['pub'];
-                    //document.getElementById("uuid").innerHTML = response['uuid'];
-                    document.getElementById("warning").style.display = "block";
+                    last_uuid = response['uid'];
+                    last_prv = response['prv']
                 },
                 error: function(error){
-                    console.log(error);
-                }
-            });
-        });
-    });
-
-    $(function(){
-
-        $('#importar').click(function(){
-            var person = prompt("Insira o CPF da pessoa a ser importada:", "");
-            $.ajax({
-                url: chain+'/migrate/'+person,
-                type: 'GET',
-                success: function(response){
-                    document.getElementById("primario").innerHTML = "Chave privada:"+response['prv'];
-                    document.getElementById("secundario").innerHTML = "Chave pública:"+response['pub'];
-                    //document.getElementById("uuid").innerHTML = response['uuid'];
-                    document.getElementById("warning").style.display = "block";
-                },
-                error: function(error){
-                    console.log(error);
+                    document.getElementById("primario").innerHTML= error;
                 }
             });
         });
@@ -161,15 +143,13 @@
         $('#atualizar').click(function(){
             var person = prompt("Insira seu novo email:", "");
             $.ajax({
-                url: chain+'/email/'+last_uuid+'/'+last_prv+'/'+person,
+                url: client+'/email/'+person+'/'+last_uuid+'/'+last_prv,
                 type: 'GET',
                 success: function(response){
-                    document.getElementById("primario").innerHTML = "Requisição para alteração de email enviado na chain";
-                    document.getElementById("secundario").innerHTML = "Requisição para alteração de email enviado na chain";
-                    document.getElementById("warning").style.display = "block";
+                    document.getElementById("primario").innerHTML= response['message'];
                 },
                 error: function(error){
-                    console.log(error);
+                     document.getElementById("primario").innerHTML= error;
                 }
             });
         });
@@ -180,13 +160,11 @@
         $('#permissao').click(function(){
             var person = prompt("Dominio para dar permissão aos seus dados:", "");
             $.ajax({
-                url: chain+'/perm/allow/'+person+'/'+last_uuid+'/'+last_prv,
+                url: client+'/perm/1/'+person+'/'+last_uuid+'/'+last_prv,
                 type: 'GET',
                 success: function(response){
-                    document.getElementById("primario").innerHTML = "Chave privada:"+response['prv'];
-                    document.getElementById("secundario").innerHTML = "Chave pública:"+response['pub'];
-                    //document.getElementById("uuid").innerHTML = response['uuid'];
-                    document.getElementById("warning").style.display = "block";
+                   document.getElementById("primario").innerHTML= response['message'];
+                   document.getElementById("primario").innerHTML= response['message'];
                 },
                 error: function(error){
                     console.log(error);
@@ -195,18 +173,15 @@
         });
     });
 
-    $(function(){
+     $(function(){
 
-        $('#permissao').click(function(){
-            var person = prompt("Gerar token para acesso aos dados pessoais (digite o dado que quer permitir acesso):", "");
+        $('#secret').click(function(){
+            var person = prompt("Dominio para dar permissão aos seus dados:", "");
             $.ajax({
-                url: chain+'/secret/'+person+'/'+last_uuid+'/'+last_prv,
+                url: client+'/secret/'+person+'/'+last_uuid+'/'+last_prv,
                 type: 'GET',
                 success: function(response){
-                    document.getElementById("primario").innerHTML = "Chave privada:"+response['prv'];
-                    document.getElementById("secundario").innerHTML = "Chave pública:"+response['pub'];
-                    //document.getElementById("uuid").innerHTML = response['uuid'];
-                    document.getElementById("warning").style.display = "block";
+                   document.getElementById("primario").innerHTML= response['message'];
                 },
                 error: function(error){
                     console.log(error);
