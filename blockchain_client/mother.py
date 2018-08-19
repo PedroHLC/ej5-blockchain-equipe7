@@ -28,19 +28,22 @@ def write_values(public_key, cpf, identifier, private_key):
         reader = csv.reader(f)
         for row in reader:
             if cpf == row[0]: # Se achar, faz as trasacoes na blockchain
-                serasa_insertvalidated('cpf', '{"number":"'+cpf+'"}', private_key, identifier)
-                serasa_insertvalidated('name', '{"full":"'+row[1]+'"}', private_key, identifier)
-                serasa_insertvalidated('home.addr', '{"street":"'+row[2]+'","neigh":"'+row[3]+'","zip":"'+row[4]+'"}', private_key, identifier)
-                serasa_insertvalidated('home.city', '{"city":"'+row[5]+'","uf":"'+row[6]+'"}', private_key, identifier)
-                serasa_insertvalidated('birth', '{"ddmmyyyy":"'+row[7]+'"}', private_key, identifier)
+                mother_insertvalidated('cpf', '{"number":"'+cpf+'"}', private_key, identifier)
+                mother_insertvalidated('name', '{"full":"'+row[1]+'"}', private_key, identifier)
+                mother_insertvalidated('home.addr', '{"street":"'+row[2]+'","neigh":"'+row[3]+'","zip":"'+row[4]+'"}', private_key, identifier)
+                mother_insertvalidated('home.city', '{"city":"'+row[5]+'","uf":"'+row[6]+'"}', private_key, identifier)
+                mother_insertvalidated('birth', '{"ddmmyyyy":"'+row[7]+'"}', private_key, identifier)
 
-def serasa_insertvalidated(subject, value, private_key, identifier):
+def mother_insertvalidated(subject, value, private_key, identifier):
     encrypted = val_encrypt(value, subject, private_key)
     # Faz a req pro server fazer a transacao
     transaction = Transaction(identifier, private_key, 'input', subject, encrypted)
     signature = transaction.sign_transaction()
     r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':identifier,'type':'input', 'label':subject, 'value':encrypted,'signature':signature})
-    # Valida o mesmo
+    mother_validate(value, identifier)
+
+@app.route("/sign/<string:value>/<string:identifier>")
+def mother_validate(value, identifier):
     sha = SHA.new(value.encode('utf-8')).hexdigest()
     transaction = Transaction(mother_uid, mother_prv, 'sign', identifier, sha)
     signature = transaction.sign_transaction()
@@ -65,7 +68,7 @@ def new_person(cpf):
     identifier = str(uuid.uuid4())
     private_key, public_key = new_keypair() # Pega as chaves
     save_public_key(public_key, identifier)
-    serasa_insertvalidated('cpf', '{"number":"'+cpf+'"}', private_key, identifier)
+    mother_insertvalidated('cpf', '{"number":"'+cpf+'"}', private_key, identifier)
     data= OrderedDict({'prv': private_key,
                         'pub': public_key,
                         'uid': identifier 
