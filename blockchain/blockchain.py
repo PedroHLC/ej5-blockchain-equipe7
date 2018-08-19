@@ -17,7 +17,7 @@ MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
 MINING_DIFFICULTY = 2
 MOTHER_ADDRESS = ''
-UUID_address = 'http://192.168.1.184:7000'
+UUID_address = 'http://mother.localhost:7000'
 
 
 class Blockchain:
@@ -57,7 +57,7 @@ class Blockchain:
         # /get MULA
         response = requests.get(UUID_address + '/get/' +uuid , {})
         if not response:
-            return 404
+            return False
         public_key = RSA.importKey(binascii.unhexlify(response.text))
         verifier = PKCS1_v1_5.new(public_key)
         h = SHA.new(str(transaction).encode('utf8'))
@@ -76,6 +76,7 @@ class Blockchain:
                                     'label':label,
                                     'value': value
                                     })
+
 
         # TODO: Checar se a assinatura existe no banco de dados (Se foi criada pela MOTHER)
         transaction_verification = self.verify_transaction_signature(uuid, signature, transaction)
@@ -485,11 +486,4 @@ if __name__ == '__main__':
     port = args.port    
     addr = args.address
     app.run(host=addr, port=port)
-
-
-
-
-
-
-
 

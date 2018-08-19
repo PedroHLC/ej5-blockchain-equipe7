@@ -12,9 +12,10 @@ from Transactions import *
 
 app = Flask(__name__)
 
-BLOCKCHAIN_IP = 'http://192.168.1.184:5000'
-mother_prv = open('mother.prv', 'r').read()[:-1]
-mother_pub = open('mother.pub', 'r').read()[:-1]
+BLOCKCHAIN_IP = 'http://miner.localhost:5000'
+mother_prv = open('mother.prv', 'r').read().strip()
+mother_pub = open('mother.pub', 'r').read().strip()
+mother_uid = 'mother'
 
 def new_person():
     random_gen = Crypto.Random.new().read
@@ -30,14 +31,14 @@ def write_values(public_key, cpf, identifier, private_key):
                 value = '{"number":"'+cpf+'"}'
                 encrypted = val_encrypt(value, 'cpf', private_key)
                 # Faz a req pro server fazer a transacao
-                transaction = Transaction(public_key, private_key, 'input', 'cpf', encrypted)
+                transaction = Transaction(identifier, private_key, 'input', 'cpf', encrypted)
                 signature = transaction.sign_transaction()
-                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':public_key,'type':'input', 'label':'cpf', 'value':encrypted,'signature':signature})
+                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':identifier,'type':'input', 'label':'cpf', 'value':encrypted,'signature':signature})
                 # Valida o mesmo
                 sha = SHA.new(value.encode('utf-8')).hexdigest()
-                transaction = Transaction(mother_pub, mother_prv, 'sign', identifier, sha)
+                transaction = Transaction(mother_uid, mother_prv, 'sign', identifier, sha)
                 signature = transaction.sign_transaction()
-                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':mother_pub,'type':'sign', 'label':identifier, 'value':sha,'signature':signature})
+                r = requests.get(url=BLOCKCHAIN_IP + '/transactions/new', params={'uuid':mother_uid,'type':'sign', 'label':identifier, 'value':sha,'signature':signature})
 
 
 def save_public_key(public_key, identifier):
@@ -48,7 +49,7 @@ def save_public_key(public_key, identifier):
 
 @app.route("/migrate/<string:cpf>")
 def store_data(cpf):
-    identifier = uuid.uuid4()
+    identifier = str(uuid.uuid4())
     private_key, public_key = new_person() # Pega as chaves
     save_public_key(public_key, identifier)
     write_values(public_key, cpf, identifier, private_key)
@@ -59,7 +60,7 @@ def get_public_key(uuid):
     filename = 'publics/' + str(uuid) + '.key'
     try:
         with open(filename, "r") as f:
-            return f.read(), 200
+            return f.read().strip(), 200
     except Exception as identifier:
         return 404
 

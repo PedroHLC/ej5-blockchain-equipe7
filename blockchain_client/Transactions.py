@@ -24,11 +24,12 @@ class Transaction:
         self.value = value
 
     def to_dict(self):
-        return OrderedDict({'uuid': self.uuid,
+        data= OrderedDict({'uuid': self.uuid,
                             'type': self.type,
                             'label': self.label,
                             'value': self.value 
                             })
+        return data
 
     def sign_transaction(self):
         """
