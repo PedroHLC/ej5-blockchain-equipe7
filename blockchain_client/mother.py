@@ -13,8 +13,8 @@ from Transactions import *
 app = Flask(__name__)
 
 BLOCKCHAIN_IP = 'http://192.168.1.184:5000'
-mother_prv = open('mother.prv', 'r').read().strip()
-mother_pub = open('mother.pub', 'r').read().strip()
+mother_prv = open('mother.prv', 'r').read()[:-1]
+mother_pub = open('mother.pub', 'r').read()[:-1]
 
 def new_person():
     random_gen = Crypto.Random.new().read
@@ -58,8 +58,7 @@ def store_data(cpf):
 def get_public_key(uuid):
     filename = 'publics/' + str(uuid) + '.key'
     try:
-        with open(filename, "r") as f:
-            return jsonify({'public_key': f.read()}), 201
+        return f.read(), 200
     except expression as identifier:
         return 404
 
@@ -68,7 +67,7 @@ def migrate_all():
     base = csv.reader(open('basedados.csv'))
     for row in base:
         response = store_data(row[0])
-    return 201
+    return 200
 
 
 if __name__ == '__main__':
