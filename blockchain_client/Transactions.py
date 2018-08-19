@@ -27,7 +27,7 @@ class Transaction:
         return OrderedDict({'uuid': self.uuid,
                             'type': self.type,
                             'label': self.label,
-                            'value': val_encrypt(self.value, self.label, self.sender_private_key)
+                            'value': self.value 
                             })
 
     def sign_transaction(self):
