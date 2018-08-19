@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import requests
 import binascii
 import base64
@@ -6,8 +7,11 @@ from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Cipher import ARC4
+from Transactions import *
 
 app = Flask(__name__)
+CORS(app)
+
 chain = 'http://miner.localhost:5000'
 
 @app.route('/secret/create/<string:label>/<string:priv_key>', methods=['GET'])
@@ -18,9 +22,13 @@ def secret_create(label, priv_key):
     secret_key = signer.sign(h)
     return str(base64.b64encode(secret_key).decode()), 200
 
-@app.route('/perm/create/<int:perm>/<string:domain>/<string:uuid>/<string:priv_key>', methods=['GET'])
+@app.route('/perm/<int:perm>/<string:domain>/<string:uuid>/<string:priv_key>', methods=['GET'])
 def permission_create(perm, domain, uuid, priv_key):
-    return 404
+    perm = ('allow' if perm else 'deny')
+    transaction = Transaction(uuid, priv_key, perm, domain, '')
+    signature = transaction.sign_transaction()
+    r = requests.get(url=chain+'/transactions/new', params={'uuid':uuid,'type':perm, 'label':domain, 'value':'','signature':signature})
+    return r.text
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
