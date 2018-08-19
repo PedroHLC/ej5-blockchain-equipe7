@@ -30,7 +30,7 @@
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ml-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="/">Mine
+              <a class="nav-link" href="/">Add transactions to Blockchain
                 <span class="sr-only">(current)</span>
               </a>
             </li>
@@ -116,8 +116,9 @@
               for (i = 0; i < response['transactions'].length; i++) { 
 
                 transaction = [count,
-                              response['transactions'][i]["recipient_address"],
-                              response['transactions'][i]["sender_address"],
+                              response['transactions'][i]["type"],
+                              response['transactions'][i]["uuid"],
+                              response['transactions'][i]["label"],
                               response['transactions'][i]["value"]];
 
                   transactions.push(transaction);
@@ -129,10 +130,11 @@
               $('#unmined_transactions_table').dataTable( {
                 data: transactions,
                 columns: [{ title: "#" },
-                          { title: "Recipient Address"},
-                          { title: "Sender Address"},
+                          { title: "UUID"},
+                          { title: "Type"},
+                          { title: "Label"},
                           { title: "Value"}],
-                columnDefs: [ {targets: [1,2,3], render: $.fn.dataTable.render.ellipsis( 25 )}]
+                columnDefs: [ {targets: [1,2,3,4], render: $.fn.dataTable.render.ellipsis( 25 )}]
               } );
 
           },
@@ -162,9 +164,10 @@
                 var formattedDateTime = date.toLocaleTimeString("en-us", options);
 
                 transaction = [count,
-                              response["chain"][i]["transactions"][j]["recipient_address"],
-                              response["chain"][i]["transactions"][j]["sender_address"],
+                              response["chain"][i]["transactions"][j]["type"],
+                              response["chain"][i]["transactions"][j]["uuid"],
                               response["chain"][i]["transactions"][j]["value"],
+                              response["chain"][i]["transactions"][j]["label"],
                               formattedDateTime,
                               response["chain"][i]["block_number"]];
                 transactions.push(transaction);

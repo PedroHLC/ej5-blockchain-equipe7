@@ -14,17 +14,17 @@ python_version  : 3.6.1
 Comments        : Wallet generation and transaction signature is based on [1]
 References      : [1] https://github.com/julienr/ipynb_playground/blob/master/bitcoin/dumbcoin/dumbcoin.ipynb
 '''
-
+import base64
 from collections import OrderedDict
 
 import binascii
 
 import Crypto
-import Crypto.Random
+import Crypto.Random as vai_dormir
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-from Crypto.Cipher import AES
+from Crypto.Cipher import AES, ARC4
 
 import requests
 from flask import Flask, jsonify, request, render_template
@@ -43,7 +43,7 @@ class Transaction:
         return OrderedDict({'uuid': self.uuid,
                             'type': self.type,
                             'label': self.label,
-                            'value': val_encrypt(self.value, self.label, sender_private_key)
+                            'value': val_encrypt(self.value, self.label, self.sender_private_key)
                             })
 
     def sign_transaction(self):
@@ -105,11 +105,14 @@ def generate_transaction():
     # print("\n"+str(response)+"\n")
     return jsonify(response), 200
 
-def val_encrypt(value, label, private_key):
-    private_key = RSA.importKey(binascii.unhexlify(self.sender_private_key))
+def val_encrypt(value, label, sender_private_key):
+    private_key = RSA.importKey(binascii.unhexlify(sender_private_key))
     signer = PKCS1_v1_5.new(private_key)
-    aes = AES.new(signer.sign(label), AES.MODE_CFB, IV)
-    return aes.encrypt(value)
+    h = SHA.new(label.encode('utf8'))
+    secret_key = signer.sign(h)
+    cipher = ARC4.new(secret_key)
+    encoded = cipher.encrypt(value)
+    return str(base64.b64encode(encoded).decode())
 
 if __name__ == '__main__':
     from argparse import ArgumentParser

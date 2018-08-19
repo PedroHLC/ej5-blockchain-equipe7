@@ -343,7 +343,8 @@ def search_blocks_by_timestamp(chain,timestamp_low,timestamp_upp):
     # TODO: Can be faster
     return blocks_list
 
-@app.route('/chain/permission',methods=['GET'])
+
+@app.route('/chain/permission',methods=['POST'])
 def search_permission():
     values = request.form
     uuid = values['uuid']
@@ -351,9 +352,9 @@ def search_permission():
     for block in blockchain.chain[::-1]:
         for transaction in block.transactions:
             if transaction['uuid'] == uuid and values['label'] == label:
-                return transaction['type']
+                return transaction['type'], 200
 
-    return 404
+    return jsonify({'message':'hvnjk'}), 404
 
 # Busca por: Label, Type(3 types diferentes), Sender, timestamp
 @app.route('/chain/search',methods=['GET'])
